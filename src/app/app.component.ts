@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Title } from "@angular/platform-browser";
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-root',
@@ -11,15 +11,14 @@ export class AppComponent implements OnInit {
   timeout: number;
   ping: number;
 
-  constructor(private title: Title) {
-  }
+  constructor(private title: Title) {}
 
   ngOnInit() {
     this.title.setTitle('User Idle Example App');
   }
 
   onChangeIdleValue(event: any) {
-    const {idle, timeout, ping} = event;
+    const { idle, timeout, ping } = event;
     this.idle = idle;
     this.timeout = timeout;
     this.ping = ping;
