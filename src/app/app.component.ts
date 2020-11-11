@@ -15,13 +15,13 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.title.setTitle("User Idle Example App")
+    this.title.setTitle('User Idle Example App');
   }
 
   onChangeIdleValue(event: any) {
     const {idle, timeout, ping} = event;
-    this.idle = idle ||this.idle;
-    this.timeout = timeout ||this.timeout;
-    this.ping = ping ||this.ping;
+    this.idle = idle;
+    this.timeout = timeout;
+    this.ping = ping;
   }
 }

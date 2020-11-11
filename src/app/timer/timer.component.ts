@@ -1,7 +1,11 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { Subscription } from 'rxjs';
-import { tap } from 'rxjs/operators';
-import { UserIdleService } from 'angular-user-idle';
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  OnInit,
+  Output
+} from '@angular/core';
+import { UserIdleService } from '../user-idle/user-idle.service';
 
 @Component({
   selector: 'app-timer',
@@ -9,90 +13,34 @@ import { UserIdleService } from 'angular-user-idle';
   styleUrls: ['./timer.component.css']
 })
 export class TimerComponent implements OnInit {
-  @Output() changeIdleValues = new EventEmitter();
-  idle: number;
+  @Output() readonly changeIdleValues = new EventEmitter();
   timeout: number;
-  ping: number;
-  lastPing: string;
-  isWatching: boolean;
-  isTimer: boolean;
-  timeIsUp: boolean;
-  timerCount: number;
+  isTimerRunning = false;
 
-  private timerStartSubscription: Subscription;
-  private timeoutSubscription: Subscription;
-  private pingSubscription: Subscription;
-
-  constructor(private userIdle: UserIdleService) {
-  }
+  constructor(
+    private readonly userIdle: UserIdleService,
+    private readonly changeDetector: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
-    this.idle = this.userIdle.getConfigValue().idle / 1000;
-    this.timeout = this.userIdle.getConfigValue().timeout;
-    this.ping = this.userIdle.getConfigValue().ping / 1000;
+    this.timeout = 10;
     this.changeIdleValues.emit({
-      idle: this.idle,
-      timeout: this.timeout,
-      ping: this.ping
+      timeout: this.timeout
+    });
+    this.userIdle.timeout$.asObservable().subscribe(timeout => {
+      this.isTimerRunning = !timeout;
+      this.changeDetector.detectChanges();
+      console.log('time out detected');
     });
   }
 
   onStartWatching() {
-    this.isWatching = true;
-    this.timerCount = this.timeout;
-    this.userIdle.setConfigValues({
-      idle: this.idle,
-      timeout: this.timeout,
-      ping: this.ping
-    });
-
+    this.isTimerRunning = true;
     // Start watching for user inactivity.
-    this.userIdle.startWatching();
-
-    // Start watching when user idle is starting.
-    this.timerStartSubscription = this.userIdle.onTimerStart()
-      .pipe(tap(() => this.isTimer = true))
-      .subscribe(count => this.timerCount = count);
-
-    // Start watch when time is up.
-    this.timeoutSubscription = this.userIdle.onTimeout()
-      .subscribe(() => this.timeIsUp = true);
-
-    this.pingSubscription = this.userIdle.ping$
-      .subscribe(value => this.lastPing = `#${value} at ${new Date().toString()}`);
-  }
-
-  onStopWatching() {
-    this.userIdle.stopWatching();
-    this.timerStartSubscription.unsubscribe();
-    this.timeoutSubscription.unsubscribe();
-    this.pingSubscription.unsubscribe();
-    this.isWatching = false;
-    this.isTimer = false;
-    this.timeIsUp = false;
-    this.lastPing = null;
-  }
-
-  onStopTimer() {
-    this.userIdle.stopTimer();
-    this.isTimer = false;
-  }
-
-  onResetTimer() {
-    this.userIdle.resetTimer();
-    this.isTimer = false;
-    this.timeIsUp = false;
-  }
-
-  onIdleKeyup() {
-    this.changeIdleValues.emit({idle: this.idle});
+    this.userIdle.startWatching(this.timeout);
   }
 
   onTimeoutKeyup() {
-    this.changeIdleValues.emit({timeout: this.timeout});
-  }
-
-  onPingKeyup() {
-    this.changeIdleValues.emit({ping: this.ping});
+    this.changeIdleValues.emit({ timeout: this.timeout });
   }
 }
